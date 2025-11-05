@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Folder Name="/github/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="src\Chirp\Chirp.csproj" Type="Classic C#" />
+  <Project Path="src\Sample\Sample.csproj" Type="Classic C#" />
+</Solution>
