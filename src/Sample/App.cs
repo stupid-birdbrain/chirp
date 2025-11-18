@@ -1,25 +1,41 @@
-﻿using Miniaudio;
-using System.Runtime.InteropServices;
+﻿using MiniaudioSharp;
+using System.Text;
+using static MiniaudioSharp.Miniaudio;
 
 namespace Sample;
 
 internal sealed unsafe class App {
     public void Run(string[] args) {
-        ma_engine* engine = (ma_engine*)NativeMemory.Alloc((nuint)sizeof(ma_engine));
-        ma.engine_init(null, engine);
+        var config = ma_device_config_init(ma_device_type.ma_device_type_playback);
+        config.playback.format = ma_format.ma_format_f32;
+        config.playback.channels = 2;
+        config.sampleRate = 48000;
 
-        string filePath2 = "sound.wav";
-        ma_sound* sound2 = (ma_sound*)NativeMemory.Alloc((nuint)sizeof(ma_sound));
-        fixed (void* p = filePath2) {
-            ma.sound_init_from_file_w(engine, (ushort*)p, (uint)ma_sound_flags.MA_SOUND_FLAG_LOOPING, null, null, sound2);
+        ma_device device;
+        ma_engine engine;
+
+        var result = ma_device_init(null, &config, &device);
+        
+        if(result != ma_result.MA_SUCCESS) {
+            throw new Exception("failed to init maudio device");
         }
-        ma.sound_start(sound2);
+        
+        result = ma_engine_init(null, &engine);
+        if(result != ma_result.MA_SUCCESS) {
+            throw new Exception("failed to init maudio engine");
+        }
+        
+        ma_device_start(&device);
 
+        var bytes = Encoding.UTF8.GetBytes("sound.wav" + '\0');
+        fixed (byte* p = bytes) {
+            ma_engine_play_sound(&engine, (sbyte*)p, null);
+        }
+        
+        Console.WriteLine("playing sound... press any key to exit");
         Console.ReadKey();
-        ma.sound_stop(sound2);
-
-        ma.engine_uninit(engine);
-        NativeMemory.Free(engine);
-        NativeMemory.Free(sound2);
+        
+        ma_device_uninit(&device);
+        ma_engine_uninit(&engine);
     }
 }
